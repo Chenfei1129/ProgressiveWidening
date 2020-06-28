@@ -9,7 +9,7 @@ class FindNextState:
 
     def __call__(self, stateNode, actionNode):
         numAction = actionNode.numVisited
-        k = math.floor(pow(numAction, self.alpha))
+        k = math.ceil(pow(numAction, self.alpha))
         state = stateNode.id
         action = actionNode.id
         nextState = self.transitionFunction(state, action)
