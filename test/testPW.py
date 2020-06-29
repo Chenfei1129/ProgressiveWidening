@@ -42,6 +42,15 @@ class TestMCTS(unittest.TestCase):
     	findNextSate = FindNextState(self.alpha, transitionFunction)
     	truthNextState = findNextSate(stateNode, actionNode)
     	self.assertAlmostEqual(truthNextState, nextSate) 
+        
+    @data((0, 1, 0, 1, 0), (1, 1, 0, 1, np.log(3)/2), (1, 1, 1, 1, 1 + np.log(3)/2))
+    @unpack
+    def testCalculateScore(self, state_visit_number, state_action_visit_number, sumValue, actionPrior, groundtruth_score):
+        curr_node = Node(numVisited = state_visit_number)
+        actionChild = Node(numVisited = state_action_visit_number, sumValue = sumValue, actionPrior = actionPrior)
+        actionNodeChild = Node(parent = actionChild, numVisited = 0, sumValue = sumValue)
+        score = self.scoreChild(curr_node, actionChild, actionNodeChild)
+        self.assertEqual(score, groundtruth_score)
 
 if __name__ == '__main__':
     unittest.main()
