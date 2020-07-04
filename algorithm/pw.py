@@ -54,6 +54,28 @@ class ScoreChild:
         score = qScore + uScore
         return score
 
+class SelectAction:
+    def __init__(self, calculateScore):
+        self.calculateScore = calculateScore
+
+    def __call__(self, stateNode, actionNode):
+        scores = [self.calculateScore(stateNode, actionNode) for actionNode in stateNode.children]
+        maxIndex = np.argwhere(scores == np.max(scores)).flatten()
+        selectedChildIndex = np.random.choice(maxIndex)
+        selectedAction = stateNode.children[selectedChildIndex]
+        return selectedAction
+
+class SelectNextState:
+    def __init__(self, selectAction):
+        self.selectAction = selectAction
+
+    def __call__(self, stateNode, actionNode):
+        selectedAction = self.selectAction(stateNode, actionNode)
+        nextPossibleState = selectedAction.children
+        numNextStateVisits = [nextState.numVisited/actionNode.numVisited for nextState in actionNode.children]
+        nextState = np.random.choice(nextPossibleState,1,numNextStateVisits)
+        return nextState
+    
 class RollOut:
     def __init__(self, rolloutPolicy, maxRolloutStep, transitionFunction, rewardFunction, isTerminal, rolloutHeuristic):
         self.transitionFunction = transitionFunction
