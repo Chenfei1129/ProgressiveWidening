@@ -53,13 +53,14 @@ class ScoreChild:
 
         score = qScore + uScore
         return score
-
+        
 class SelectAction:
     def __init__(self, calculateScore):
         self.calculateScore = calculateScore
 
-    def __call__(self, stateNode, actionNode):
-        scores = [self.calculateScore(stateNode, actionNode) for actionNode in stateNode.children]
+    def __call__(self, stateNode):
+        scores = [self.calculateScore(stateNode, actionNode) for actionNode in list(stateNode.children)]
+        #print(scores)
         maxIndex = np.argwhere(scores == np.max(scores)).flatten()
         selectedChildIndex = np.random.choice(maxIndex)
         selectedAction = stateNode.children[selectedChildIndex]
@@ -75,7 +76,7 @@ class SelectNextState:
         numNextStateVisits = [nextState.numVisited/actionNode.numVisited for nextState in actionNode.children]
         nextState = np.random.choice(nextPossibleState,1,numNextStateVisits)
         return nextState
-    
+
 class RollOut:
     def __init__(self, rolloutPolicy, maxRolloutStep, transitionFunction, rewardFunction, isTerminal, rolloutHeuristic):
         self.transitionFunction = transitionFunction
@@ -103,9 +104,60 @@ class RollOut:
         totalRewardForRollout += heuristicReward
 
         return totalRewardForRollout
-        
+
 def backup(value, nodeList): #anytree lib
     for node in nodeList:
         node.sumValue += value
         node.numVisited += 1
+
+class MCTS:
+    def __init__(self, numSimulation, selectAction, selectNextState, expand, estimateValue, backup, outputDistribution):
+        self.numSimulation = numSimulation
+        self.selectAction = selectAction 
+        self.selectNextState = selectNextState
+        self.expand = expand
+        self.estimateValue = estimateValue
+        self.backup = backup
+        self.outputDistribution = outputDistribution
+
+    def __call__(self, currentState):
+        root = Node(id={"state": currentState}, numVisited=0, sumValue=0, isExpanded=False)
+        root = self.expand(root)
+
+        for exploreStep in range(self.numSimulation):
+            currentNode = root
+            nodePath = [currentNode]
+
+            while currentNode.isExpanded:
+                actionNode = self.selectAction(currentNode)
+                nextStateNode = self.selectNextState(currentNode, nextStateNode)
+                nodePath.append(actionNode)
+                nodePath.append(nextStateNode)
+                currentNode = nextStateNode
+
+            leafNode = self.expand(currentNode)
+            value = self.estimateValue(leafNode)
+            self.backup(value, nodePath)
+
+        actionDistribution = self.outputDistribution(root)
+        return actionDistribution
+
+class RewardFunction:
+    def __init__(self, step_penalty, catch_reward, isTerminal):
+        self.step_penalty = step_penalty
+        self.catch_reward = catch_reward
+        self.isTerminal = isTerminal
+
+    def __call__(self, state, action):
+        if self.isTerminal(state):
+            return self.catch_reward
+        else:
+            return self.step_penalty
+
+class Terminal:
+    def __init__(self, target_state):
+        self.target_state = target_state
+
+    def __call__(self, state):
+        return state == self.target_state
 
