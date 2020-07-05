@@ -5,7 +5,7 @@ import numpy as np
 from ddt import ddt, data, unpack
 from anytree import AnyNode as Node
 
-from src.algorithm.pw import Expand, InitializeChildren, ScoreChild, RollOut, backup, RewardFunction, Terminal, SelectAction, SelectNextState
+from algorithm.pw import Expand, InitializeChildren, ScoreChild, RollOut, backup, RewardFunction, Terminal, SelectAction, SelectNextState
 @ddt
 class TestMCTS(unittest.TestCase):
     def setUp(self):
